@@ -112,6 +112,31 @@ static void Test_ProcessWindowNullPointer(void){
 	assert(TaskSupervisor_ProcessWindow(NULL,
 	         TASK_SUPERVISOR_WINDOW_COMPLETE) == TASK_SUPERVISOR_NULL_POINTER);
 }
+
+static void Test_CompleteWindowRecoversFromFault(void)
+{
+  TaskSupervisor_t supervisor;
+
+  assert(TaskSupervisor_Init(&supervisor) ==
+         TASK_SUPERVISOR_OK);
+
+  assert(TaskSupervisor_ProcessWindow(
+             &supervisor,
+             TASK_SUPERVISOR_WINDOW_TIMEOUT) ==
+         TASK_SUPERVISOR_OK);
+
+  assert(supervisor.state ==
+         TASK_SUPERVISOR_STATE_FAULT);
+
+  assert(TaskSupervisor_ProcessWindow(
+             &supervisor,
+             TASK_SUPERVISOR_WINDOW_COMPLETE) ==
+         TASK_SUPERVISOR_OK);
+
+  /* Intentionally wrong for the CI failure demonstration. */
+  assert(supervisor.state ==
+         TASK_SUPERVISOR_STATE_HEALTHY);
+}
 int main(void)
 {
   Test_InitValidObject();
@@ -121,6 +146,7 @@ int main(void)
   Test_InvalidResultDoesNotModifySupervisor();
   Test_CountersSaturateAtUint32Max();
   Test_ProcessWindowNullPointer();
+  Test_CompleteWindowRecoversFromFault();
   puts("TASK SUPERVISOR TEST: PASS");
   return 0;
 }

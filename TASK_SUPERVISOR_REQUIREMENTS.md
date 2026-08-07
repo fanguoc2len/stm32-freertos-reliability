@@ -18,7 +18,7 @@
 |---|---|
 | TSR-001 | Test_InitValidObject |
 | TSR-002 | Test_InitNullPointer |
-| TSR-003 | Test_CompleteWindowSetsHealthy |
+| TSR-003 | Test_CompleteWindowSetsHealthy, Test_CompleteWindowRecoversFromFault |
 | TSR-004 | Test_TimeoutWindowSetsFault |
 | TSR-005 | Test_InvalidResultDoesNotModifySupervisor |
 | TSR-006 | Test_CountersSaturateAtUint32Max |
