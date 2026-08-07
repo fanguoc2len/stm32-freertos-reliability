@@ -135,7 +135,7 @@ static void Test_CompleteWindowRecoversFromFault(void)
 
   /* Intentionally wrong for the CI failure demonstration. */
   assert(supervisor.state ==
-         TASK_SUPERVISOR_STATE_FAULT);
+         TASK_SUPERVISOR_STATE_HEALTHY);
 }
 int main(void)
 {
