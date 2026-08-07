@@ -1,4 +1,5 @@
 # STM32 FreeRTOS Reliability Practice
+[![Host Unit Tests](https://github.com/fanguoc2len/stm32-freertos-reliability/actions/workflows/host-tests.yml/badge.svg)](https://github.com/fanguoc2len/stm32-freertos-reliability/actions/workflows/host-tests.yml)
 
 A reliability-focused STM32F103 firmware project demonstrating task scheduling,
 inter-task communication, interrupt deferral, synchronization, health monitoring,
