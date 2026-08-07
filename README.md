@@ -8,25 +8,33 @@ memory diagnostics, and host-based unit testing.
 ## System architecture
 
 ```mermaid
-flowchart LR
-    GPIO[PA0 Button] -->|EXTI0| ISR[GPIO ISR]
-    ISR -->|Binary semaphore| EventTask
-    EventTask -->|Restart 50 ms timer| DebounceTimer
-    DebounceTimer -->|Validated button event| Application
+flowchart TB
+    subgraph INPUT["Input and interrupt path"]
+        direction LR
+        BTN["PA0 Button"] -->|Rising edge| ISR["EXTI0 ISR"]
+        ISR -->|Release| SEM["Binary Semaphore"]
+        SEM -->|Wake| EVT["EventTask"]
+        EVT -->|Restart| DB["50 ms Debounce Timer"]
+        DB --> APP["Validated Button Event"]
+    end
 
-    ControlTask -->|uint32_t status| StatusQueue
-    StatusQueue --> DiagnosticTask
+    subgraph COMM["Task communication"]
+        direction LR
+        CTRL["ControlTask<br/>10 ms"] -->|Status| QUEUE["Status Queue"]
+        QUEUE --> DIAG["DiagnosticTask<br/>100 ms"]
+        CTRL -->|Lock| MUTEX["System Data Mutex"]
+        DIAG -->|Lock| MUTEX
+    end
 
-    ControlTask -->|Heartbeat bit 0| EventFlags
-    DiagnosticTask -->|Heartbeat bit 1| EventFlags
-    EventFlags -->|Wait all, 200 ms timeout| MonitorTask
-
-    MonitorTask --> TaskSupervisor
-    TaskSupervisor -->|Healthy| WatchdogRefresh
-    TaskSupervisor -->|Timeout| FaultState
-
-    ControlTask -->|Mutex protected| SharedData
-    DiagnosticTask -->|Mutex protected| SharedData
+    subgraph HEALTH["Health supervision"]
+        direction LR
+        CTRL -->|Heartbeat bit 0| FLAGS["System Event Flags"]
+        DIAG -->|Heartbeat bit 1| FLAGS
+        FLAGS -->|Wait all / 200 ms| MON["MonitorTask"]
+        MON --> SUP["Task Supervisor"]
+        SUP -->|Complete window| WDG["Watchdog Refresh"]
+        SUP -->|Timeout| FAULT["Fault State"]
+    end
 ```
 ## Main components
 | Component | Responsibility |
