@@ -1,4 +1,4 @@
-name: Host Unit Tests
+name: Code Quality
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  task-supervisor-tests:
+  unit-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,3 +27,25 @@ jobs:
 
       - name: Run unit tests
         run: ./task_supervisor_test
+
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Install Cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Analyze Task Supervisor
+        run: >
+          cppcheck
+          --enable=warning,style,performance,portability
+          --std=c11
+          --error-exitcode=1
+          --suppress=missingIncludeSystem
+          -ICore/Inc
+          Core/Src/task_supervisor.c
