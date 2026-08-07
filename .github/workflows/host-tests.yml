@@ -1,0 +1,29 @@
+name: Host Unit Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  task-supervisor-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Build unit tests
+        run: >
+          gcc -std=c11 -Wall -Wextra -Werror
+          -ICore/Inc
+          tests/test_task_supervisor.c
+          Core/Src/task_supervisor.c
+          -o task_supervisor_test
+
+      - name: Run unit tests
+        run: ./task_supervisor_test
