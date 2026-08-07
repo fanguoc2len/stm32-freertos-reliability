@@ -1,0 +1,13 @@
+# Build output
+Debug/
+Release/
+
+# Local IDE state
+.metadata/
+.settings/language.settings.xml
+*.launch
+
+# Editor and operating-system files
+*.swp
+.DS_Store
+Thumbs.db
