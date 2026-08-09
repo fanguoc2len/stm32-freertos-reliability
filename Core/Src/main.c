@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "watchdog_policy.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -529,7 +529,11 @@ void StartMonitorTask(void *argument)
 		  }
 	    //monitor_sync_count++;
 	    //task_watchdog_fault_active = 0U;
-	    watchdog_refresh_request_count++;
+		 if (WatchdogPolicy_IsRefreshAllowed(
+		         task_supervisor.state) != 0U)
+		 {
+		   watchdog_refresh_request_count++;
+		 }
 	  }
 	  else
 	  {

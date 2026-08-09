@@ -31,11 +31,13 @@ flowchart TB
         CTRL -->|Heartbeat bit 0| FLAGS["System Event Flags"]
         DIAG -->|Heartbeat bit 1| FLAGS
         FLAGS -->|Wait all / 200 ms| MON["MonitorTask"]
-        MON --> SUP["Task Supervisor"]
-        SUP -->|Complete window| WDG["Watchdog Refresh"]
-        SUP -->|Timeout| FAULT["Fault State"]
+        MON -->|Complete or timeout| SUP["Task Supervisor"]
+        SUP -->|Health state| POLICY["Watchdog Policy"]
+        POLICY -->|HEALTHY| WDG["Refresh Request"]
+        POLICY -->|INIT / FAULT / invalid| BLOCK["Refresh Blocked"]
     end
 ```
+
 ## Main components
 | Component | Responsibility |
 |---|---|
@@ -48,6 +50,7 @@ flowchart TB
 | System Event Flags | Synchronizes Control and Diagnostic heartbeats |
 | System Data Mutex | Protects shared data from race conditions |
 | Debounce Timer | Validates button state after a 50 ms delay |
+| Watchdog Policy | Allows refresh only when the Task Supervisor is healthy |
 
 ## Project structure
 
@@ -55,17 +58,21 @@ flowchart TB
 RTOS_Practice_F103/
 ├── Core/
 │   ├── Inc/
-│   │   └── task_supervisor.h
+│   │   ├── task_supervisor.h
+│   │   └── watchdog_policy.h
 │   └── Src/
 │       ├── main.c
 │       ├── freertos.c
 │       ├── stm32f1xx_it.c
-│       └── task_supervisor.c
+│       ├── task_supervisor.c
+│       └── watchdog_policy.c
 ├── Middlewares/
 ├── Drivers/
 ├── tests/
-│   └── test_task_supervisor.c
+│   ├── test_task_supervisor.c
+│   └── test_watchdog_policy.c
 ├── TASK_SUPERVISOR_REQUIREMENTS.md
+├── WATCHDOG_POLICY_REQUIREMENTS.md
 └── RTOS_Practice_F103.ioc
 ```
 
@@ -110,28 +117,48 @@ Expected result:
 
 ## Run host unit tests
 
-From Windows Terminal with WSL:
+From a WSL shell:
 
 ```bash
-wsl bash -lc "cd /mnt/e/stm32/RTOS_Practice_F103 && gcc -std=c11 -Wall -Wextra -Werror -ICore/Inc tests/test_task_supervisor.c Core/Src/task_supervisor.c -o /tmp/task_supervisor_test && /tmp/task_supervisor_test"
+cd /mnt/e/stm32/RTOS_Practice_F103
+
+gcc -std=c11 -Wall -Wextra -Werror \
+  -ICore/Inc \
+  tests/test_task_supervisor.c \
+  Core/Src/task_supervisor.c \
+  -o /tmp/task_supervisor_test
+
+/tmp/task_supervisor_test
+
+gcc -std=c11 -Wall -Wextra -Werror \
+  -ICore/Inc \
+  tests/test_watchdog_policy.c \
+  Core/Src/watchdog_policy.c \
+  -o /tmp/watchdog_policy_test
+
+/tmp/watchdog_policy_test
 ```
 
 Expected result:
 
 ```text
 TASK SUPERVISOR TEST: PASS
+WATCHDOG POLICY TEST: PASS
 ```
+
 
 ## Requirements and tests
 
-Task Supervisor requirements and test traceability are documented in
-[TASK_SUPERVISOR_REQUIREMENTS.md](TASK_SUPERVISOR_REQUIREMENTS.md).
+- [Task Supervisor requirements](TASK_SUPERVISOR_REQUIREMENTS.md)
+- [Watchdog Policy requirements](WATCHDOG_POLICY_REQUIREMENTS.md)
 
 ## Verification status
 
 - STM32 firmware compilation: passed.
 - Host unit tests: passed.
-- Requirement traceability: complete for Task Supervisor.
+- Cppcheck static analysis: passed.
+- Line and branch coverage: 100%.
+- Requirement traceability: complete for Task Supervisor and Watchdog Policy.
 - On-target execution and timing validation: pending hardware availability.
 
 ## Target
