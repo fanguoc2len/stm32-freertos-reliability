@@ -146,7 +146,6 @@ TASK SUPERVISOR TEST: PASS
 WATCHDOG POLICY TEST: PASS
 ```
 
-## Requirements and tests
 
 ## Requirements and tests
 
