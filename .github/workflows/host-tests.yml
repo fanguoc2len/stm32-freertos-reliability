@@ -27,7 +27,19 @@ jobs:
           tests/test_task_supervisor.c
           Core/Src/task_supervisor.c
           -o task_supervisor_test
+      - name: Build watchdog policy tests with sanitizers
+        run: >
+          gcc -std=c11 -Wall -Wextra -Werror
+          -O0 -g
+          -fsanitize=address,undefined
+          -fno-omit-frame-pointer
+          -ICore/Inc
+          tests/test_watchdog_policy.c
+          Core/Src/watchdog_policy.c
+          -o watchdog_policy_test
 
+      - name: Run watchdog policy tests with sanitizers
+        run: ./watchdog_policy_test
       - name: Run unit tests with sanitizers
         run: ./task_supervisor_test
 
@@ -43,7 +55,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cppcheck
 
-      - name: Analyze Task Supervisor
+      - name: Analyze reliability modules
         run: >
           cppcheck
           --enable=warning,style,performance,portability
@@ -52,6 +64,8 @@ jobs:
           --suppress=missingIncludeSystem
           -ICore/Inc
           Core/Src/task_supervisor.c
+          Core/Src/watchdog_policy.c
+
   coverage:
     runs-on: ubuntu-latest
 
@@ -73,9 +87,16 @@ jobs:
             tests/test_task_supervisor.c \
             Core/Src/task_supervisor.c \
             -o coverage/task_supervisor_test
-
-      - name: Run coverage test
-        run: ./coverage/task_supervisor_test
+          gcc -std=c11 -Wall -Wextra -Werror \
+            -O0 -g --coverage -fprofile-abs-path \
+            -ICore/Inc \
+            tests/test_watchdog_policy.c \
+            Core/Src/watchdog_policy.c \
+            -o coverage/watchdog_policy_test
+      - name: Run coverage tests
+        run: |
+          ./coverage/task_supervisor_test
+          ./coverage/watchdog_policy_test
 
       - name: Enforce coverage gate
         run: >
@@ -83,6 +104,7 @@ jobs:
           --root .
           --object-directory coverage
           --filter 'Core/Src/task_supervisor.c'
+          --filter 'Core/Src/watchdog_policy.c'
           --txt
           --print-summary
           --fail-under-line 100
