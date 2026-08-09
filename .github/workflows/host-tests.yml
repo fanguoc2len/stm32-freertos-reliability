@@ -17,15 +17,18 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
-      - name: Build unit tests
+      - name: Build unit tests with sanitizers
         run: >
           gcc -std=c11 -Wall -Wextra -Werror
+          -O0 -g
+          -fsanitize=address,undefined
+          -fno-omit-frame-pointer
           -ICore/Inc
           tests/test_task_supervisor.c
           Core/Src/task_supervisor.c
           -o task_supervisor_test
 
-      - name: Run unit tests
+      - name: Run unit tests with sanitizers
         run: ./task_supervisor_test
 
   static-analysis:
@@ -49,3 +52,4 @@ jobs:
           --suppress=missingIncludeSystem
           -ICore/Inc
           Core/Src/task_supervisor.c
+          
