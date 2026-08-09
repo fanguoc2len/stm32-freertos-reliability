@@ -42,6 +42,27 @@ jobs:
         run: ./watchdog_policy_test
       - name: Run unit tests with sanitizers
         run: ./task_supervisor_test
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Build reliability flow test with sanitizers
+        run: >
+          gcc -std=c11 -Wall -Wextra -Werror
+          -O0 -g
+          -fsanitize=address,undefined
+          -fno-omit-frame-pointer
+          -ICore/Inc
+          tests/test_reliability_flow.c
+          Core/Src/task_supervisor.c
+          Core/Src/watchdog_policy.c
+          -o reliability_flow_test
+
+      - name: Run reliability flow test with sanitizers
+        run: ./reliability_flow_test
 
   static-analysis:
     runs-on: ubuntu-latest

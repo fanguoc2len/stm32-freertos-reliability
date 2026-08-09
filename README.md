@@ -70,7 +70,8 @@ RTOS_Practice_F103/
 ├── Drivers/
 ├── tests/
 │   ├── test_task_supervisor.c
-│   └── test_watchdog_policy.c
+│   ├── test_watchdog_policy.c
+│   └── test_reliability_flow.c
 ├── TASK_SUPERVISOR_REQUIREMENTS.md
 ├── WATCHDOG_POLICY_REQUIREMENTS.md
 └── RTOS_Practice_F103.ioc
@@ -137,6 +138,15 @@ gcc -std=c11 -Wall -Wextra -Werror \
   -o /tmp/watchdog_policy_test
 
 /tmp/watchdog_policy_test
+
+gcc -std=c11 -Wall -Wextra -Werror \
+  -ICore/Inc \
+  tests/test_reliability_flow.c \
+  Core/Src/task_supervisor.c \
+  Core/Src/watchdog_policy.c \
+  -o /tmp/reliability_flow_test
+
+/tmp/reliability_flow_test
 ```
 
 Expected result:
@@ -144,6 +154,7 @@ Expected result:
 ```text
 TASK SUPERVISOR TEST: PASS
 WATCHDOG POLICY TEST: PASS
+RELIABILITY FLOW TEST: PASS
 ```
 
 
@@ -151,11 +162,12 @@ WATCHDOG POLICY TEST: PASS
 
 - [Task Supervisor requirements](TASK_SUPERVISOR_REQUIREMENTS.md)
 - [Watchdog Policy requirements](WATCHDOG_POLICY_REQUIREMENTS.md)
+- Cross-module health, fault, and recovery behavior is verified by [tests/test_reliability_flow.c](tests/test_reliability_flow.c).
 
 ## Verification status
 
 - STM32 firmware compilation: passed.
-- Host unit tests: passed.
+- Host unit and integration tests: passed.
 - Cppcheck static analysis: passed.
 - Line and branch coverage: 100%.
 - Requirement traceability: complete for Task Supervisor and Watchdog Policy.
