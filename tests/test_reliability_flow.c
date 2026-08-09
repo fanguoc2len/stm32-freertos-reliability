@@ -8,8 +8,7 @@
 int main(void)
 {
   TaskSupervisor_t supervisor;
-
-  /* Startup: chưa xác nhận hệ thống khỏe. */
+  /* Startup: system health has not been confirmed. */
   assert(TaskSupervisor_Init(&supervisor) ==
          TASK_SUPERVISOR_OK);
   assert(supervisor.state ==
@@ -17,7 +16,7 @@ int main(void)
   assert(WatchdogPolicy_IsRefreshAllowed(
              supervisor.state) == 0U);
 
-  /* Nhận đủ heartbeat: cho phép refresh. */
+  /* Complete heartbeat window: allow refresh. */
   assert(TaskSupervisor_ProcessWindow(
              &supervisor,
              TASK_SUPERVISOR_WINDOW_COMPLETE) ==
@@ -27,7 +26,7 @@ int main(void)
   assert(WatchdogPolicy_IsRefreshAllowed(
              supervisor.state) == 1U);
 
-  /* Fault injection: heartbeat bị timeout. */
+  /* Fault injection: heartbeat window times out. */
   assert(TaskSupervisor_ProcessWindow(
              &supervisor,
              TASK_SUPERVISOR_WINDOW_TIMEOUT) ==
@@ -37,7 +36,7 @@ int main(void)
   assert(WatchdogPolicy_IsRefreshAllowed(
              supervisor.state) == 0U);
 
-  /* Heartbeat trở lại: hệ thống phục hồi. */
+  /* Heartbeat recovers: restore healthy behavior. */
   assert(TaskSupervisor_ProcessWindow(
              &supervisor,
              TASK_SUPERVISOR_WINDOW_COMPLETE) ==
