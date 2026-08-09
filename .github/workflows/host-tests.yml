@@ -52,4 +52,38 @@ jobs:
           --suppress=missingIncludeSystem
           -ICore/Inc
           Core/Src/task_supervisor.c
-          
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Install gcovr
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcovr
+
+      - name: Build coverage test
+        run: |
+          mkdir -p coverage
+          gcc -std=c11 -Wall -Wextra -Werror \
+            -O0 -g --coverage -fprofile-abs-path \
+            -ICore/Inc \
+            tests/test_task_supervisor.c \
+            Core/Src/task_supervisor.c \
+            -o coverage/task_supervisor_test
+
+      - name: Run coverage test
+        run: ./coverage/task_supervisor_test
+
+      - name: Enforce coverage gate
+        run: >
+          gcovr
+          --root .
+          --object-directory coverage
+          --filter 'Core/Src/task_supervisor.c'
+          --txt
+          --print-summary
+          --fail-under-line 100
+          --fail-under-branch 100
