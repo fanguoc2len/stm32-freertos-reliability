@@ -38,8 +38,23 @@ jobs:
           Core/Src/watchdog_policy.c
           -o watchdog_policy_test
 
+      - name: Build watchdog service tests with sanitizers
+        run: >
+          gcc -std=c11 -Wall -Wextra -Werror
+          -O0 -g
+          -fsanitize=address,undefined
+          -fno-omit-frame-pointer
+          -ICore/Inc
+          tests/test_watchdog_service.c
+          Core/Src/watchdog_service.c
+          -o watchdog_service_test
+
       - name: Run watchdog policy tests with sanitizers
         run: ./watchdog_policy_test
+
+      - name: Run watchdog service tests with sanitizers
+        run: ./watchdog_service_test
+
       - name: Run unit tests with sanitizers
         run: ./task_supervisor_test
   integration-tests:
@@ -59,6 +74,7 @@ jobs:
           tests/test_reliability_flow.c
           Core/Src/task_supervisor.c
           Core/Src/watchdog_policy.c
+          Core/Src/watchdog_service.c
           -o reliability_flow_test
 
       - name: Run reliability flow test with sanitizers
@@ -86,6 +102,7 @@ jobs:
           -ICore/Inc
           Core/Src/task_supervisor.c
           Core/Src/watchdog_policy.c
+          Core/Src/watchdog_service.c
 
   coverage:
     runs-on: ubuntu-latest
@@ -114,10 +131,17 @@ jobs:
             tests/test_watchdog_policy.c \
             Core/Src/watchdog_policy.c \
             -o coverage/watchdog_policy_test
+          gcc -std=c11 -Wall -Wextra -Werror \
+            -O0 -g --coverage -fprofile-abs-path \
+            -ICore/Inc \
+            tests/test_watchdog_service.c \
+            Core/Src/watchdog_service.c \
+            -o coverage/watchdog_service_test
       - name: Run coverage tests
         run: |
           ./coverage/task_supervisor_test
           ./coverage/watchdog_policy_test
+          ./coverage/watchdog_service_test
 
       - name: Enforce coverage gate
         run: >
@@ -126,6 +150,7 @@ jobs:
           --object-directory coverage
           --filter 'Core/Src/task_supervisor.c'
           --filter 'Core/Src/watchdog_policy.c'
+          --filter 'Core/Src/watchdog_service.c'
           --txt
           --print-summary
           --fail-under-line 100

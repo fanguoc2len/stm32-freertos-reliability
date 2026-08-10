@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "watchdog_policy.h"
+#include "watchdog_service.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,6 +36,11 @@ typedef struct
   uint32_t last_status;
   uint32_t total_access_count;
 } SystemData_t;
+
+typedef struct
+{
+  volatile uint32_t request_count;
+} WatchdogRequestContext_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -126,7 +132,10 @@ static volatile uint32_t monitor_wait_error_count = 0U;
 //static volatile uint32_t task_watchdog_fault_active = 0U;
 //static volatile uint32_t task_watchdog_timeout_count = 0U;
 static volatile uint32_t task_watchdog_last_error = 0U;
-static volatile uint32_t watchdog_refresh_request_count = 0U;
+static WatchdogRequestContext_t watchdog_request_context =
+{
+  .request_count = 0U
+};
 static volatile uint32_t control_stack_min_free_bytes =0U;
 static volatile uint32_t diagnostic_stack_min_free_bytes = 0U;
 static volatile uint32_t event_stack_min_free_bytes =0U;
@@ -150,11 +159,18 @@ void ButtonDebounceTimerCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 void SystemClock_Config(void);
+static void WatchdogRefresh_Request(void *context);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void WatchdogRefresh_Request(void *context)
+{
+  WatchdogRequestContext_t *request_context =
+      (WatchdogRequestContext_t *)context;
 
+  request_context->request_count++;
+}
 /* USER CODE END 0 */
 
 /**
@@ -529,10 +545,17 @@ void StartMonitorTask(void *argument)
 		  }
 	    //monitor_sync_count++;
 	    //task_watchdog_fault_active = 0U;
-		 if (WatchdogPolicy_IsRefreshAllowed(
-		         task_supervisor.state) != 0U)
+		 uint8_t refresh_allowed =
+		     WatchdogPolicy_IsRefreshAllowed(
+		         task_supervisor.state);
+
+		 if (WatchdogService_Execute(
+		         refresh_allowed,
+		         WatchdogRefresh_Request,
+		         &watchdog_request_context) !=
+		     WATCHDOG_SERVICE_OK)
 		 {
-		   watchdog_refresh_request_count++;
+		   Error_Handler();
 		 }
 	  }
 	  else

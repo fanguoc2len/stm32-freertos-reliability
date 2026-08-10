@@ -33,8 +33,11 @@ flowchart TB
         FLAGS -->|Wait all / 200 ms| MON["MonitorTask"]
         MON -->|Complete or timeout| SUP["Task Supervisor"]
         SUP -->|Health state| POLICY["Watchdog Policy"]
-        POLICY -->|HEALTHY| WDG["Refresh Request"]
-        POLICY -->|INIT / FAULT / invalid| BLOCK["Refresh Blocked"]
+        POLICY -->|Decision 0 or 1| SERVICE["Watchdog Service"]
+        SERVICE -->|Allowed: call| CALLBACK["Injected Refresh Callback"]
+        SERVICE -->|Blocked: do not call| BLOCK["Refresh Blocked"]
+        CALLBACK -->|Firmware| WDG["Refresh Request"]
+        CALLBACK -.->|Host test| FAKE["Fake Watchdog"]
     end
 ```
 
@@ -51,6 +54,7 @@ flowchart TB
 | System Data Mutex | Protects shared data from race conditions |
 | Debounce Timer | Validates button state after a 50 ms delay |
 | Watchdog Policy | Allows refresh only when the Task Supervisor is healthy |
+| Watchdog Service | Executes an injected refresh callback without depending on STM32 HAL |
 
 ## Project structure
 
@@ -59,21 +63,25 @@ RTOS_Practice_F103/
 ├── Core/
 │   ├── Inc/
 │   │   ├── task_supervisor.h
-│   │   └── watchdog_policy.h
+│   │   ├── watchdog_policy.h
+│   │   └── watchdog_service.h
 │   └── Src/
 │       ├── main.c
 │       ├── freertos.c
 │       ├── stm32f1xx_it.c
 │       ├── task_supervisor.c
-│       └── watchdog_policy.c
+│       ├── watchdog_policy.c
+│       └── watchdog_service.c
 ├── Middlewares/
 ├── Drivers/
 ├── tests/
 │   ├── test_task_supervisor.c
 │   ├── test_watchdog_policy.c
+│   ├── test_watchdog_service.c
 │   └── test_reliability_flow.c
 ├── TASK_SUPERVISOR_REQUIREMENTS.md
 ├── WATCHDOG_POLICY_REQUIREMENTS.md
+├── WATCHDOG_SERVICE_REQUIREMENTS.md
 └── RTOS_Practice_F103.ioc
 ```
 
@@ -98,6 +106,7 @@ RTOS_Practice_F103/
 - Deferred GPIO interrupt processing using a binary semaphore.
 - Task heartbeat supervision using event flags.
 - Software watchdog decision logic.
+- Hardware-independent watchdog execution using an injected callback.
 - RTOS object allocation checks before scheduler startup.
 - Per-task stack high-water monitoring.
 - Stack overflow and allocation-failure hooks.
@@ -141,9 +150,18 @@ gcc -std=c11 -Wall -Wextra -Werror \
 
 gcc -std=c11 -Wall -Wextra -Werror \
   -ICore/Inc \
+  tests/test_watchdog_service.c \
+  Core/Src/watchdog_service.c \
+  -o /tmp/watchdog_service_test
+
+/tmp/watchdog_service_test
+
+gcc -std=c11 -Wall -Wextra -Werror \
+  -ICore/Inc \
   tests/test_reliability_flow.c \
   Core/Src/task_supervisor.c \
   Core/Src/watchdog_policy.c \
+  Core/Src/watchdog_service.c \
   -o /tmp/reliability_flow_test
 
 /tmp/reliability_flow_test
@@ -154,14 +172,15 @@ Expected result:
 ```text
 TASK SUPERVISOR TEST: PASS
 WATCHDOG POLICY TEST: PASS
+WATCHDOG SERVICE TEST: PASS
 RELIABILITY FLOW TEST: PASS
 ```
-
 
 ## Requirements and tests
 
 - [Task Supervisor requirements](TASK_SUPERVISOR_REQUIREMENTS.md)
 - [Watchdog Policy requirements](WATCHDOG_POLICY_REQUIREMENTS.md)
+- [Watchdog Service requirements](WATCHDOG_SERVICE_REQUIREMENTS.md)
 - Cross-module health, fault, and recovery behavior is verified by [tests/test_reliability_flow.c](tests/test_reliability_flow.c).
 
 ## Verification status
@@ -170,7 +189,7 @@ RELIABILITY FLOW TEST: PASS
 - Host unit and integration tests: passed.
 - Cppcheck static analysis: passed.
 - Line and branch coverage: 100%.
-- Requirement traceability: complete for Task Supervisor and Watchdog Policy.
+- Requirement traceability: complete for Task Supervisor, Watchdog Policy, and Watchdog Service.
 - On-target execution and timing validation: pending hardware availability.
 
 ## Target
