@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build unit tests with sanitizers
         run: >
@@ -62,7 +62,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build reliability flow test with sanitizers
         run: >
@@ -85,7 +85,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install Cppcheck
         run: |
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install gcovr
         run: |
